@@ -1,0 +1,12 @@
+db_file: ./test.db
+cert_defaults:
+  digest_algo: sha256
+  issuer: "honest-achmed-intermediate"
+  expiration_days: 365
+  country_name: "US"
+  state_name: "NJ"
+  locality_name: "Newark"
+  organization_name: "Honest Achmed's Used Cars and Certificates"
+  organizational_unit_name: "Mustafa's Creaky Old Laptop"
+  email_address: "achmed@honestachmed.dyndns.org"
+default_crypto: "rsa:4096"

@@ -1,0 +1,16 @@
+hash: 7692008f3ddca827bfa6ba99041986ea968335cfb96ad7884e4e5f23b1895295
+updated: 2017-12-19T14:47:22.932352461-06:00
+imports:
+- name: github.com/mattn/go-sqlite3
+  version: ed69081a91fd053f17672236b0dd52ba7485e1a3
+- name: github.com/mitchellh/go-homedir
+  version: b8bc1bf767474819792c23f32d8286a45736f1c6
+- name: github.com/urfave/cli
+  version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
+- name: golang.org/x/net
+  version: 66aacef3dd8a676686c7ae3716979581e8b03c47
+  subpackages:
+  - context
+- name: gopkg.in/yaml.v2
+  version: 1be3d31502d6eabc0dd7ce5b0daab022e14a5538
+testImports: []

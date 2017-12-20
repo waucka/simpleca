@@ -1,0 +1,6 @@
+*~
+.*.sw?
+.sw?
+build
+vendor
+test.db
