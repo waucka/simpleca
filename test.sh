@@ -12,3 +12,10 @@ sleep 5
 ./build/linux-amd64/simpleca -config ./test_config.yaml renew -validity 365 wildcard-google-com
 ./build/linux-amd64/simpleca -config ./test_config.yaml export cert/wildcard-google-com | openssl x509 -noout -text | grep 'Not'
 ./build/linux-amd64/simpleca -config ./test_config.yaml revoke wildcard-google-com | openssl crl -noout -text -inform DER
+
+# Test issuing from a revoked CA
+./build/linux-amd64/simpleca -config ./test_config.yaml revoke honest-achmed-intermediate | openssl crl -noout -text -inform DER
+if ./build/linux-amd64/simpleca -config ./test_config.yaml issue -issuer honest-achmed-intermediate -server -name "*.microsoft.com" -altnames "microsoft.com,microsoft.cn,*.microsoft.cn" -crypto ecdsa:p256 -digest sha256 -validity 365 wildcard-microsoft-com; then
+    echo 'Uh oh!  That should have failed!'
+    exit 1
+fi

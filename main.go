@@ -814,7 +814,7 @@ func getRootCertId(db *sql.DB, certId string) (string, error) {
 }
 
 func certFromDB(db *sql.DB, certId string) (*x509.Certificate, error) {
-	rows, err := db.Query("SELECT derdata FROM certs WHERE id = ?", certId)
+	rows, err := db.Query("SELECT derdata FROM certs WHERE id = ? AND revoked = 0", certId)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to query DB for cert/%s", certId)
 	}
@@ -827,7 +827,7 @@ func certFromDB(db *sql.DB, certId string) (*x509.Certificate, error) {
 		}
 		return x509.ParseCertificate(derdata)
 	} else {
-		return nil, fmt.Errorf("cert/%s does not exist.", certId)
+		return nil, fmt.Errorf("cert/%s does not exist or has been revoked.", certId)
 	}
 }
 
