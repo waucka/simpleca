@@ -5,9 +5,9 @@ simpleca is a tool for managing an x.509 PKI without screwing around with OpenSS
 ## What does it do?
 
 ```
-$ simpleca createroot -name "Honest Achmed's Used Cars and Certificates" -validity 3650 honest-achmed
-$ simpleca createsub -issuer honest-achmed -validity 1825 honest-achmed-intermediate
-$ simpleca issue -issuer honest-achmed-intermediate -server -name "*.google.com" -altnames "google.com","google.cn","*.google.cn" -validity 365 wildcard-google-com
+$ simpleca createroot -name "Honest Achmed's Used Cars and Certificates" -crypto ecdsa:p256 -digest sha256 -validity 3650 honest-achmed
+$ simpleca createsub -issuer honest-achmed -name "Equally-Honest Mustafa" -crypto ecdsa:p256 -digest sha256 -validity 1825 honest-achmed-intermediate
+$ simpleca issue -issuer honest-achmed-intermediate -server -name "*.google.com" -altnames "google.com,google.cn,*.google.cn" -crypto ecdsa:p256 -digest sha256 -validity 365 wildcard-google-com
 $ simpleca renew -validity 365 wildcard-google-com
 
 $ simpleca export cert/honest-achmed
