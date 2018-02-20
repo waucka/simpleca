@@ -660,7 +660,7 @@ func certFromCsr(csr *x509.CertificateRequest, keyUsage x509.KeyUsage, extKeyUsa
 	maxPathLen := 0
 	if isCA {
 		// HARDCODING!  BAH!
-		maxPathLen = 1
+		maxPathLen = -1
 	}
 	now := time.Now()
 	return &x509.Certificate{
