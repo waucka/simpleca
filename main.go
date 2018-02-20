@@ -549,7 +549,7 @@ func storeCSR(db *sql.DB, certId string, derBytes []byte) error {
 	return nil
 }
 
-func stupidCsrDance(template *x509.CertificateRequest, privkey interface{}, keyUsage x509.KeyUsage, extKeyUsage []x509.ExtKeyUsage) ([]byte, *x509.Certificate, error) {
+func stupidCsrDance(template *x509.CertificateRequest, privkey interface{}, keyUsage x509.KeyUsage, extKeyUsage []x509.ExtKeyUsage, isCA bool) ([]byte, *x509.Certificate, error) {
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, privkey)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to create leaf CSR: %s", err.Error())
@@ -558,7 +558,7 @@ func stupidCsrDance(template *x509.CertificateRequest, privkey interface{}, keyU
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to reload leaf CSR (this should never happen!): %s", err.Error())
 	}
-	certTemplate, err := certFromCsr(csr, keyUsage, extKeyUsage)
+	certTemplate, err := certFromCsr(csr, keyUsage, extKeyUsage, isCA)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to create certificate template from CSR: %s", err.Error())
 	}
@@ -627,7 +627,7 @@ func generateCACert(c *cli.Context, config *Config, db *sql.DB, parentId string,
 			PublicKey:          pubkey,
 			Subject:            fullName,
 		}
-		csrBytes, template, err := stupidCsrDance(&templateCSR, privkey, caCertKeyUsage, nil)
+		csrBytes, template, err := stupidCsrDance(&templateCSR, privkey, caCertKeyUsage, nil, true)
 		if err != nil {
 			return e(err.Error())
 		}
@@ -652,10 +652,15 @@ func generateCACert(c *cli.Context, config *Config, db *sql.DB, parentId string,
 	return nil
 }
 
-func certFromCsr(csr *x509.CertificateRequest, keyUsage x509.KeyUsage, extKeyUsage []x509.ExtKeyUsage) (*x509.Certificate, error) {
+func certFromCsr(csr *x509.CertificateRequest, keyUsage x509.KeyUsage, extKeyUsage []x509.ExtKeyUsage, isCA bool) (*x509.Certificate, error) {
 	serial, err := rand.Int(rand.Reader, maxSerial)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to generate random serial number (WTF is wrong with your machine?)")
+	}
+	maxPathLen := 0
+	if isCA {
+		// HARDCODING!  BAH!
+		maxPathLen = 1
 	}
 	now := time.Now()
 	return &x509.Certificate{
@@ -666,9 +671,9 @@ func certFromCsr(csr *x509.CertificateRequest, keyUsage x509.KeyUsage, extKeyUsa
 		PublicKeyAlgorithm:    csr.PublicKeyAlgorithm,
 		PublicKey:             csr.PublicKey,
 		BasicConstraintsValid: true,
-		IsCA:           false,
-		MaxPathLen:     0,
-		MaxPathLenZero: false,
+		IsCA:           isCA,
+		MaxPathLen:     maxPathLen,
+		MaxPathLenZero: maxPathLen == 0,
 		KeyUsage:       keyUsage,
 		ExtKeyUsage:    extKeyUsage,
 		DNSNames:       csr.DNSNames,
@@ -738,7 +743,7 @@ func generateLeafCert(c *cli.Context, config *Config, db *sql.DB, parentId strin
 		}
 	}
 
-	csrBytes, template, err := stupidCsrDance(&templateCSR, privkey, leafCertKeyUsage, extKeyUsage)
+	csrBytes, template, err := stupidCsrDance(&templateCSR, privkey, leafCertKeyUsage, extKeyUsage, false)
 	template.NotBefore = now.Add(-10 * time.Minute).UTC()
 	template.NotAfter = now.Add(time.Duration(validity*24) * time.Hour).UTC()
 	derBytes, err := x509.CreateCertificate(rand.Reader, template, parentCert, pubkey, signkey)
@@ -1050,7 +1055,7 @@ func renewCert(c *cli.Context) error {
 		extKeyUsage = clientCertExtKeyUsage
 	}
 	now := time.Now()
-	template, err := certFromCsr(csr, leafCertKeyUsage, extKeyUsage)
+	template, err := certFromCsr(csr, leafCertKeyUsage, extKeyUsage, oldCert.IsCA)
 	if err != nil {
 		return e("Failed to create certificate template from CSR: %s", err.Error())
 	}
@@ -1059,7 +1064,7 @@ func renewCert(c *cli.Context) error {
 	template.NotAfter = now.Add(time.Duration(validity*24) * time.Hour).UTC()
 	derBytes, err := x509.CreateCertificate(rand.Reader, template, parentCert, oldCert.PublicKey, signkey)
 	if err != nil {
-		return e("Failed to create CA certificate: %s", err.Error())
+		return e("Failed to create certificate: %s", err.Error())
 	}
 
 	err = updateCert(db, certId, derBytes)
