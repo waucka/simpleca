@@ -736,11 +736,13 @@ func generateLeafCert(c *cli.Context, config *Config, db *sql.DB, parentId strin
 	if c.Bool("server") {
 		altnames := strings.Split(c.String("altnames"), ",")
 		for _, altname := range altnames {
-			if ip := net.ParseIP(altname); ip != nil {
-				templateCSR.IPAddresses = append(templateCSR.IPAddresses, ip)
-			} else {
-				templateCSR.DNSNames = append(templateCSR.DNSNames, altname)
-				fmt.Printf("added DNS altname: %s\n", altname)
+			if altname != "" {
+				if ip := net.ParseIP(altname); ip != nil {
+					templateCSR.IPAddresses = append(templateCSR.IPAddresses, ip)
+				} else {
+					templateCSR.DNSNames = append(templateCSR.DNSNames, altname)
+					fmt.Printf("added DNS altname: %s\n", altname)
+				}
 			}
 		}
 	}
